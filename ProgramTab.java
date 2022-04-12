@@ -47,6 +47,14 @@ class ProgramTab extends JPanel {
     public String getWorkingDirectory() {
         return workingDir;
     }
+
+    public String getOptionalDescription() {
+        return optionalDescription;
+    }
+
+    public String getIconPath() {
+        return iconPath;
+    }
 }
 
 class LaunchButtonListener extends PLauncher implements ActionListener {
