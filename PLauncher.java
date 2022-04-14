@@ -6,6 +6,7 @@ import java.awt.event.*;
 import javax.swing.event.*;
 import java.io.*;
 import java.util.Scanner;
+import java.net.*;
 
 
 class SysConst {
@@ -51,7 +52,17 @@ class PLauncherFrame extends JFrame {
             } 
         } catch (IOException e) {}
 
-        
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(SysConst.getPrePath() + "conf" + File.separator + "lastcheck.txt"));
+            String lc = br.readLine();
+            final long millis = Long.parseLong(lc);
+            br.close();
+            if ((System.currentTimeMillis() - millis) >= 172800000) { // sono passati almeno 2 giorni
+                checkUpdates(true);
+            }
+        } catch (IOException ex) {}
+
+
         loadPrograms();
         
         fileMenu = new JMenu("File");
@@ -162,7 +173,6 @@ class PLauncherFrame extends JFrame {
             if (l.equals("Italiano")) lang = 1;
             else if (l.equals("English")) lang = 0;
             else {
-                JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("SettingFileError", lang));
                 lm.actionPerformed(null);
                 loadLanguage();
             }
@@ -175,6 +185,48 @@ class PLauncherFrame extends JFrame {
 
     protected void loadChangelog() {
         JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("Changelog", lang), "Changelog", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    protected void checkUpdates(boolean showOnlyIfPositive) {
+        final int internalVersion = 100;
+        final String internalVersionString = new String("100");
+        try {
+            URL url = new URL("https://raw.githubusercontent.com/maurotramonti/plauncher/main/conf/latest.txt");
+            InputStream is = url.openStream();
+            // Stream to the destionation file
+            FileOutputStream fos = new FileOutputStream(SysConst.getPrePath() + "conf" + File.separator + "latest.txt");
+            // Read bytes from URL to the local file
+            byte[] buffer = new byte[4096];
+            int bytesRead = 0;
+            while ((bytesRead = is.read(buffer)) != -1) {
+      	        fos.write(buffer, 0, bytesRead);
+            }
+
+            // Close destination stream
+            fos.close();
+            // Close URL stream
+            is.close();
+            File file = new File(SysConst.getPrePath() + "conf" + File.separator + "latest.txt");
+            Scanner scanner = new Scanner(file);
+            String l = new String();
+            l = scanner.nextLine();
+            final int internalVersionRead = Integer.parseInt(l);
+            if (internalVersionRead > internalVersion) {
+                JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("CUTxtY", lang), LanguageManager.getTranslationsFromFile("CUTtl", lang), JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                if (!showOnlyIfPositive) JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("CUTxtN", lang), LanguageManager.getTranslationsFromFile("CUTtl", lang), JOptionPane.INFORMATION_MESSAGE);
+            }
+            scanner.close();            
+            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+            bw.write(internalVersionString);
+            bw.close();
+            bw = new BufferedWriter(new FileWriter(SysConst.getPrePath() + "conf" + File.separator + "lastcheck.txt"));
+            bw.write(Long.toString(System.currentTimeMillis()));
+            bw.close();
+        } catch (Exception exception) {
+            JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("CheckUpdatesErr", lang), LanguageManager.getTranslationsFromFile("Warning", lang), JOptionPane.ERROR_MESSAGE);
+            return;
+        }
     }
 
     protected void loadPrograms() {
@@ -194,7 +246,7 @@ class PLauncherFrame extends JFrame {
                         pAttrs[i] = scanner.nextLine();
                         i++;
                     } 
-                    pTabs[j] = new ProgramTab(pAttrs[0], pAttrs[1], pAttrs[2], pAttrs[3], pAttrs[4]);
+                    pTabs[j] = new ProgramTab(pAttrs[0], pAttrs[1], pAttrs[2], pAttrs[3], pAttrs[4], lang);
                     tPane.addTab(pTabs[j].getProgramName(), new ImageIcon(new ImageIcon(pAttrs[3]).getImage().getScaledInstance(24, 24,  Image.SCALE_DEFAULT)), pTabs[j]);
                     j++;
                     scanner.close();  // libera l'accesso al file

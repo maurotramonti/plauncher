@@ -12,24 +12,37 @@ class LanguageManager extends PLauncher implements ActionListener {
     private int lang;
     public static final String[] langs = {"Italiano", "English"};
     public void actionPerformed(ActionEvent e) { 
-        lang = frame.getLang();
+        try {
+            lang = frame.getLang();
+        } catch (Exception exx) {
+            lang = 0;
+        }
         String clg;
         if(lang == 0) clg = new String("English");
         else if(lang == 1) clg = new String("Italiano");
         else clg = new String("none");
         try {
-            String s = (String) JOptionPane.showInputDialog(frame.getFrame(), getTranslationsFromFile("ChooseLanguage", lang), getTranslationsFromFile("Warning", lang), JOptionPane.PLAIN_MESSAGE, null, langs, clg);
-            if (s != null) {
-                File file = new File(SysConst.getPrePath() + "conf" + File.separator + "language.txt");
-                FileWriter fw = new FileWriter(file);
-                BufferedWriter br = new BufferedWriter(fw);
-                br.write(s);
-                br.close();
+            String s;
+            try {
+                s = (String) JOptionPane.showInputDialog(frame.getFrame(), getTranslationsFromFile("ChooseLanguage", lang), getTranslationsFromFile("Warning", lang), JOptionPane.PLAIN_MESSAGE, null, langs, clg);
+            } catch (NullPointerException ex3) {
+                s = (String) JOptionPane.showInputDialog(null, getTranslationsFromFile("ChooseLanguage", lang), getTranslationsFromFile("Warning", lang), JOptionPane.PLAIN_MESSAGE, null, langs, clg);
             }
-        }
-        catch (IOException ex) {
-            JOptionPane.showMessageDialog(frame.getFrame(), getTranslationsFromFile("PermsError", lang));
-            System.out.println("[DEBUG] Error in LanguageManager.java");
+            if (s != null) {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(SysConst.getPrePath() + "conf" + File.separator + "language.txt"));
+                bw.write(s);
+                bw.close();
+            } else {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(SysConst.getPrePath() + "conf" + File.separator + "language.txt"));
+                bw.write("English");
+                bw.close();
+            }
+        } catch (IOException ex) {
+            try {
+                JOptionPane.showMessageDialog(frame.getFrame(), getTranslationsFromFile("PermsError", lang));
+            } catch (NullPointerException ex2) {
+                JOptionPane.showMessageDialog(null, getTranslationsFromFile("PermsError", lang));
+            }
             return;
         }
     }

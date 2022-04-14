@@ -19,14 +19,14 @@ class FileMenuHandler extends PLauncher implements ActionListener {
             String exeName = new String("");
             try {
                 do {
-                programName = JOptionPane.showInputDialog(frame.getFrame(), "Program name: ", "Example");
-                if (programName.contains("\\") || programName.contains("/")) {
-                    JOptionPane.showMessageDialog(frame.getFrame(), "Si prega di non inserire il carattere \"\\\" o \"/\" nel nome del programma.", "Attenzione", JOptionPane.WARNING_MESSAGE);
-                    programName = new String("");
-                }
+                    programName = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramName", lang) + ": ", "Example");
+                    if (programName.contains("\\") || programName.contains("/")) {
+                        JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("DontInsertCharacters", lang), LanguageManager.getTranslationsFromFile("Warning", lang), JOptionPane.WARNING_MESSAGE);
+                        programName = new String("");
+                    }
                 } while (programName.equals(""));
                 do {
-                executablePath = JOptionPane.showInputDialog(frame.getFrame(), "Executable path: ");
+                executablePath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ExecutablePath", lang) + ": ").replaceAll("\"", "");
                 } while (executablePath.equals(""));
                 StringTokenizer st = new StringTokenizer(executablePath, "\\");
                 int tcount = st.countTokens();
@@ -35,10 +35,10 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                     exeName = new String(st.nextToken());
                 }
                 do {
-                workingDirectory = JOptionPane.showInputDialog(frame.getFrame(), "Working directory: ", executablePath.replace(exeName, ""));
+                workingDirectory = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("WorkingDir", lang) + ": ", executablePath.replace(exeName, ""));
                 } while (workingDirectory.equals(""));
-                iconPath = JOptionPane.showInputDialog(frame.getFrame(), "Icon path: ");
-                optionalDescription = JOptionPane.showInputDialog(frame.getFrame(), "Optional description: ", "No description");
+                iconPath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("Icon path", 0) + ": ").replaceAll("\"", "");
+                optionalDescription = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("OptionalDescription", lang) + ": ");
             } catch (NullPointerException ex) {
                 return;
             }
@@ -55,7 +55,7 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                 frame.tPane.removeAll();
                 frame.loadPrograms();
             } catch (IOException exc) {
-                JOptionPane.showMessageDialog(frame.getFrame(), "Impossibile aggiungere un nuovo programma!", "Errore", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramAddingError", lang), LanguageManager.getTranslationsFromFile("Error", lang), JOptionPane.ERROR_MESSAGE);
                 return;
             }
         } else if (e.getActionCommand().equals("Modify")) {
@@ -63,15 +63,15 @@ class FileMenuHandler extends PLauncher implements ActionListener {
             ProgramTab current = frame.pTabs[frame.tPane.getSelectedIndex()];
             System.out.println("Programma da modificare: " + current.getProgramName());
             File conffile = new File(SysConst.getPrePath() + "programs" + File.separator + current.getProgramName() + ".txt");
-            String[] options = {"Nome", "Percorso eseguibile", "Cartella di lavoro", "Percorso icona", "Descrizione opzionale"};
-            String s = (String) JOptionPane.showInputDialog(frame.getFrame(), "Seleziona la proprietà da modificare:", "Modifica programma", JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+            String[] options = {LanguageManager.getTranslationsFromFile("ProgramName", lang), LanguageManager.getTranslationsFromFile("ExecutablePath", lang), LanguageManager.getTranslationsFromFile("WorkingDir", lang), LanguageManager.getTranslationsFromFile("IconPath", lang), LanguageManager.getTranslationsFromFile("OptionalDescription", lang)};
+            String s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("SelectProperty", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
             if (s.equals(null)) return;
             try {
                 BufferedWriter bw = new BufferedWriter(new FileWriter("none"));
                 
-                if(s.equals("Nome")) {
+                if(s.equals(LanguageManager.getTranslationsFromFile("ProgramName", lang))) {
                     do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), "Program name:", "Modifica programma", JOptionPane.QUESTION_MESSAGE);
+                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramName", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
                         if (s.equals(null)) return;
                     } while (s.equals(""));
                     conffile.delete();
@@ -84,9 +84,9 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                     bw.write(current.getIconPath() + '\n');
                     bw.write(current.getOptionalDescription());                
                 }
-                else if(s.equals("Cartella di lavoro")) {
+                else if(s.equals(LanguageManager.getTranslationsFromFile("WorkingDir", lang))) {
                     do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), "Working directory:", "Modifica programma", JOptionPane.QUESTION_MESSAGE);
+                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("WorkingDir", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
                         if (s.equals(null)) return;
                     } while (s.equals(""));
                     conffile.delete();
@@ -99,9 +99,9 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                     bw.write(current.getIconPath() + '\n');
                     bw.write(current.getOptionalDescription());                
                 }
-                else if(s.equals("Percorso eseguibile")) {
+                else if(s.equals(LanguageManager.getTranslationsFromFile("ExecutablePath", lang))) {
                     do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), "Executable path:", "Modifica programma", JOptionPane.QUESTION_MESSAGE);
+                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ExecutablePath", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
                         if (s.equals(null)) return;
                     } while (s.equals(""));
                     conffile.delete();
@@ -114,9 +114,9 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                     bw.write(current.getIconPath() + '\n');
                     bw.write(current.getOptionalDescription());                
                 }
-                else if(s.equals("Percorso icona")) {
+                else if(s.equals(LanguageManager.getTranslationsFromFile("IconPath", lang))) {
                     do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), "Icon path:", "Modifica programma", JOptionPane.QUESTION_MESSAGE);
+                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("IconPath", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
                         if (s.equals(null)) return;
                     } while (s.equals(""));
                     conffile.delete();
@@ -129,9 +129,9 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                     bw.write(s + '\n');
                     bw.write(current.getOptionalDescription());                
                 }
-                else if(s.equals("Descrizione opzionale")) {
+                else if(s.equals(LanguageManager.getTranslationsFromFile("OptionalDescription", lang))) {
                     do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), "Optional description:", "Modifica programma", JOptionPane.QUESTION_MESSAGE);
+                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("OptionalDescription", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
                         if (s.equals(null)) return;
                     } while (s.equals(""));
                     conffile.delete();
@@ -146,7 +146,7 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                 }
                 bw.close();
             } catch (IOException ex) {
-                JOptionPane.showMessageDialog(frame.getFrame(), "Errore durante la modifica!", "Errore", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame.getFrame(), "Errore durante la modifica!", LanguageManager.getTranslationsFromFile("Error", lang), JOptionPane.ERROR_MESSAGE);
             }
                 frame.tPane.removeAll();
                 frame.loadPrograms();
@@ -158,7 +158,7 @@ class FileMenuHandler extends PLauncher implements ActionListener {
             if(conffile.delete()) {
                 frame.tPane.removeAll();
                 frame.loadPrograms();
-            } else JOptionPane.showMessageDialog(frame.getFrame(), "Impossibile eliminare il programma!", "Errore", JOptionPane.ERROR_MESSAGE);
+            } else JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramDeletingError", lang), LanguageManager.getTranslationsFromFile("Error", lang), JOptionPane.ERROR_MESSAGE);
         }
 
     }
