@@ -1,0 +1,1 @@
+Si prega di non inserire il carattere "\" o "/" nel nome del programma.

@@ -1,0 +1,2 @@
+Unable to launch the program! (do you have privileges?)
+Make sure that the data entered is correct: you can change it by going to File > Edit tab.

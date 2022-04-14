@@ -1,0 +1,2 @@
+Impossibile lanciare il programma! (hai i privilegi?)
+Assicurati che i dati inseriti siano corretti: puoi modificarli andando su File > Modifica scheda.

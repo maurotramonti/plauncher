@@ -1,0 +1,5 @@
+Modifiche nella versione 1.0:
+
+ - Traduzioni completate
+ - Verifica degli aggiornamenti automatica ogni due giorni
+ - Bug fixing
