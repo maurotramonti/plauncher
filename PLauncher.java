@@ -188,8 +188,8 @@ class PLauncherFrame extends JFrame {
     }
 
     protected void checkUpdates(boolean showOnlyIfPositive) {
-        final int internalVersion = 100;
-        final String internalVersionString = new String("100");
+        final int internalVersion = 101;
+        final String internalVersionString = new String("101");
         try {
             URL url = new URL("https://raw.githubusercontent.com/maurotramonti/plauncher/main/conf/latest.txt");
             InputStream is = url.openStream();

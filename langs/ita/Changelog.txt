@@ -1,5 +1,3 @@
-Modifiche nella versione 1.0:
+Modifiche nella versione 1.0.1:
 
- - Traduzioni completate
- - Verifica degli aggiornamenti automatica ogni due giorni
- - Bug fixing
+ - Risoluzione bug grafici

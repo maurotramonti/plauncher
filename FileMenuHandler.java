@@ -19,14 +19,14 @@ class FileMenuHandler extends PLauncher implements ActionListener {
             String exeName = new String("");
             try {
                 do {
-                    programName = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramName", lang) + ": ", "Example");
+                    programName = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramName", lang), "Example");
                     if (programName.contains("\\") || programName.contains("/")) {
                         JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("DontInsertCharacters", lang), LanguageManager.getTranslationsFromFile("Warning", lang), JOptionPane.WARNING_MESSAGE);
                         programName = new String("");
                     }
                 } while (programName.equals(""));
                 do {
-                executablePath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ExecutablePath", lang) + ": ").replaceAll("\"", "");
+                executablePath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ExecutablePath", lang)).replaceAll("\"", "");
                 } while (executablePath.equals(""));
                 StringTokenizer st = new StringTokenizer(executablePath, "\\");
                 int tcount = st.countTokens();
@@ -37,8 +37,8 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                 do {
                 workingDirectory = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("WorkingDir", lang) + ": ", executablePath.replace(exeName, ""));
                 } while (workingDirectory.equals(""));
-                iconPath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("Icon path", 0) + ": ").replaceAll("\"", "");
-                optionalDescription = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("OptionalDescription", lang) + ": ");
+                iconPath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("IconPath", 0)).replaceAll("\"", "");
+                optionalDescription = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("OptionalDescription", lang));
             } catch (NullPointerException ex) {
                 return;
             }

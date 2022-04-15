@@ -24,7 +24,7 @@ class ProgramTab extends JPanel {
         launchButton.addActionListener(new LaunchButtonListener());
 
         JLabel description = new JLabel(optionalDescription);
-        JTextArea usefulInfoText = new JTextArea(LanguageManager.getTranslationsFromFile("WorkingDir", lang) + ": \n\n" + workingDir + "\n\n" + LanguageManager.getTranslationsFromFile("ExecutablePath", lang) + ": \n\n" + executablePath);
+        JTextArea usefulInfoText = new JTextArea(LanguageManager.getTranslationsFromFile("WorkingDir", lang) + "\n\n" + workingDir + "\n\n" + LanguageManager.getTranslationsFromFile("ExecutablePath", lang) + "\n\n" + executablePath);
         usefulInfoText.setEditable(false);
         JScrollPane usefulInformations = new JScrollPane(usefulInfoText);
         usefulInformations.setPreferredSize(new Dimension(200, 0));
