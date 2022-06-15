@@ -102,10 +102,13 @@ class LanguageManager extends PLauncher implements ActionListener {
         else if (lang == 1) return "Versione: " + System.getProperty("java.vm.version") + "\nPercorso di installazione:  " + System.getProperty("java.home") + "\nSistema operativo: " + System.getProperty("os.name");
         return "none";
     }
-    public static String getTranslatedString(int value, int lang) {
+    /*public static String getTranslatedString(int value, int lang) {
             System.out.println("Missing translation: number " + value);
             return "none";        
-    }
+    }*/
     
+    public static int getCurrentLang() {
+        return frame.getLang();
+    }
 
 }

@@ -6,6 +6,7 @@ import java.awt.event.*;
 import javax.swing.event.*;
 import java.io.*;
 import java.util.StringTokenizer;
+import java.util.Scanner;
 
 
 class FileMenuHandler extends PLauncher implements ActionListener {
@@ -15,42 +16,18 @@ class FileMenuHandler extends PLauncher implements ActionListener {
         if (e.getActionCommand().equals("Exit")) {
             System.exit(0);
         } else if (e.getActionCommand().equals("Create new")) {
-            String programName, executablePath, workingDirectory, iconPath, optionalDescription;
-            String exeName = new String("");
+            String[] datas = new String[5];
+            AddProgramDialog dialog = new AddProgramDialog(frame.getFrame(), datas);
+            if (datas[0] == null) return; // if the user has chosen "Cancel", is enough to check if the first mandatory field is null
             try {
-                do {
-                    programName = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramName", lang), "Example");
-                    if (programName.contains("\\") || programName.contains("/")) {
-                        JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("DontInsertCharacters", lang), LanguageManager.getTranslationsFromFile("Warning", lang), JOptionPane.WARNING_MESSAGE);
-                        programName = new String("");
-                    }
-                } while (programName.equals(""));
-                do {
-                executablePath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ExecutablePath", lang)).replaceAll("\"", "");
-                } while (executablePath.equals(""));
-                StringTokenizer st = new StringTokenizer(executablePath, "\\");
-                int tcount = st.countTokens();
-                
-                for (int i = 0; i < tcount; i++) {
-                    exeName = new String(st.nextToken());
-                }
-                do {
-                workingDirectory = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("WorkingDir", lang) + ": ", executablePath.replace(exeName, ""));
-                } while (workingDirectory.equals(""));
-                iconPath = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("IconPath", 0)).replaceAll("\"", "");
-                optionalDescription = JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("OptionalDescription", lang));
-            } catch (NullPointerException ex) {
-                return;
-            }
-            try {
-                File outFile = new File(SysConst.getPrePath() + "programs" + File.separator + programName + ".txt");
+                File outFile = new File(SysConst.getPrePath() + "programs" + File.separator + datas[0] + ".txt");
                 outFile.createNewFile();
                 BufferedWriter bw = new BufferedWriter(new FileWriter(outFile.getAbsolutePath()));
-                bw.write(programName + '\n');
-                bw.write(workingDirectory + '\n');
-                bw.write(executablePath + '\n');
-                bw.write(iconPath + '\n');
-                bw.write(optionalDescription);
+                bw.write(datas[0] + '\n');
+                bw.write(datas[2] + '\n');
+                bw.write(datas[1] + '\n');
+                bw.write(datas[3] + '\n');
+                bw.write(datas[4]);
                 bw.close();
                 frame.tPane.removeAll();
                 frame.loadPrograms();
@@ -58,98 +35,42 @@ class FileMenuHandler extends PLauncher implements ActionListener {
                 JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramAddingError", lang), LanguageManager.getTranslationsFromFile("Error", lang), JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+       
+       
         } else if (e.getActionCommand().equals("Modify")) {
             if (frame.tPane.getSelectedIndex() == -1) return;
+            String[] datas = new String[6];
+            datas[5] = "false";
             ProgramTab current = frame.pTabs[frame.tPane.getSelectedIndex()];
-            System.out.println("Programma da modificare: " + current.getProgramName());
-            File conffile = new File(SysConst.getPrePath() + "programs" + File.separator + current.getProgramName() + ".txt");
-            String[] options = {LanguageManager.getTranslationsFromFile("ProgramName", lang), LanguageManager.getTranslationsFromFile("ExecutablePath", lang), LanguageManager.getTranslationsFromFile("WorkingDir", lang), LanguageManager.getTranslationsFromFile("IconPath", lang), LanguageManager.getTranslationsFromFile("OptionalDescription", lang)};
-            String s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("SelectProperty", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-            if (s.equals(null)) return;
+            File conffile = new File(SysConst.getPrePath() + "programs\\" + current.getProgramName() + ".txt");
             try {
-                BufferedWriter bw = new BufferedWriter(new FileWriter("none"));
-                
-                if(s.equals(LanguageManager.getTranslationsFromFile("ProgramName", lang))) {
-                    do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramName", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
-                        if (s.equals(null)) return;
-                    } while (s.equals(""));
-                    conffile.delete();
-                    conffile = new File(SysConst.getPrePath() + "programs" + File.separator + s + ".txt");
-                    conffile.createNewFile();
-                    bw = new BufferedWriter(new FileWriter(conffile.getAbsolutePath()));
-                    bw.write(s + '\n');
-                    bw.write(current.getWorkingDirectory() + '\n');
-                    bw.write(current.getExecutablePath() + '\n');
-                    bw.write(current.getIconPath() + '\n');
-                    bw.write(current.getOptionalDescription());                
+                Scanner scanner = new Scanner(conffile);
+                for (int i = 0; i < 5; i++) {
+                    if (scanner.hasNextLine() == false) {
+                        datas[i] = "";
+                        continue;
+                    }
+                    datas[i] = scanner.nextLine();
                 }
-                else if(s.equals(LanguageManager.getTranslationsFromFile("WorkingDir", lang))) {
-                    do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("WorkingDir", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
-                        if (s.equals(null)) return;
-                    } while (s.equals(""));
-                    conffile.delete();
-                    conffile = new File(SysConst.getPrePath() + "programs" + File.separator + current.getProgramName() + ".txt");
-                    conffile.createNewFile();
-                    bw = new BufferedWriter(new FileWriter(conffile.getAbsolutePath()));
-                    bw.write(current.getProgramName() + '\n');
-                    bw.write(s + '\n');
-                    bw.write(current.getExecutablePath() + '\n');
-                    bw.write(current.getIconPath() + '\n');
-                    bw.write(current.getOptionalDescription());                
-                }
-                else if(s.equals(LanguageManager.getTranslationsFromFile("ExecutablePath", lang))) {
-                    do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ExecutablePath", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
-                        if (s.equals(null)) return;
-                    } while (s.equals(""));
-                    conffile.delete();
-                    conffile = new File(SysConst.getPrePath() + "programs" + File.separator + current.getProgramName() + ".txt");
-                    conffile.createNewFile();
-                    bw = new BufferedWriter(new FileWriter(conffile.getAbsolutePath()));
-                    bw.write(current.getProgramName() + '\n');
-                    bw.write(current.getWorkingDirectory() + '\n');
-                    bw.write(s + '\n');
-                    bw.write(current.getIconPath() + '\n');
-                    bw.write(current.getOptionalDescription());                
-                }
-                else if(s.equals(LanguageManager.getTranslationsFromFile("IconPath", lang))) {
-                    do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("IconPath", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
-                        if (s.equals(null)) return;
-                    } while (s.equals(""));
-                    conffile.delete();
-                    conffile = new File(SysConst.getPrePath() + "programs" + File.separator + current.getProgramName() + ".txt");
-                    conffile.createNewFile();
-                    bw = new BufferedWriter(new FileWriter(conffile.getAbsolutePath()));
-                    bw.write(current.getProgramName() + '\n');
-                    bw.write(current.getWorkingDirectory() + '\n');
-                    bw.write(current.getExecutablePath() + '\n');
-                    bw.write(s + '\n');
-                    bw.write(current.getOptionalDescription());                
-                }
-                else if(s.equals(LanguageManager.getTranslationsFromFile("OptionalDescription", lang))) {
-                    do {
-                        s = (String) JOptionPane.showInputDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("OptionalDescription", lang), LanguageManager.getTranslationsFromFile("EditProgram", lang), JOptionPane.QUESTION_MESSAGE);
-                        if (s.equals(null)) return;
-                    } while (s.equals(""));
-                    conffile.delete();
-                    conffile = new File(SysConst.getPrePath() + "programs" + File.separator + current.getProgramName() + ".txt");
-                    conffile.createNewFile();
-                    bw = new BufferedWriter(new FileWriter(conffile.getAbsolutePath()));
-                    bw.write(current.getProgramName() + '\n');
-                    bw.write(current.getWorkingDirectory() + '\n');
-                    bw.write(current.getExecutablePath() + '\n');
-                    bw.write(current.getIconPath() + '\n');
-                    bw.write(s);                
-                }
+                scanner.close();
+                EditProgramDialog dialog = new EditProgramDialog(frame.getFrame(), datas);
+                System.out.println(datas[5]);
+                if (datas[5].equals("false")) return;
+                BufferedWriter bw = new BufferedWriter(new FileWriter(conffile));
+                bw.write(datas[0] + '\n');
+                bw.write(datas[2] + '\n');
+                bw.write(datas[1] + '\n');
+                bw.write(datas[3] + '\n');
+                bw.write(datas[4]);
                 bw.close();
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(frame.getFrame(), "Errore durante la modifica!", LanguageManager.getTranslationsFromFile("Error", lang), JOptionPane.ERROR_MESSAGE);
-            }
+                conffile.renameTo(new File(SysConst.getPrePath() + "programs\\" + datas[0] + ".txt"));
                 frame.tPane.removeAll();
                 frame.loadPrograms();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
 
         } else if (e.getActionCommand().equals("Delete")) {
             if (frame.tPane.getSelectedIndex() == -1) return;
