@@ -1,26 +1,28 @@
-package plauncher;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import javax.swing.event.*;
 import javax.swing.border.*;
 import javax.swing.filechooser.*;
 
 
 class AddProgramDialog extends JDialog {
-    private JDialog dialog;
+    private final JDialog dialog;
+
+    private final PLauncherFrame frame;
     JPanel contents, buttons;
-    SubmitButton submit;
-    CancelButton cancel;
     GridBagConstraints c = new GridBagConstraints();
 
     JComponent[] firstColWidgets = new JComponent[5];
     DialogField[] secondColWidgets = new DialogField[5];
 
-    AddProgramDialog(JFrame parent, String[] dataArray) {
-        super(parent, "Add new program...", true);
-        dialog = this;
+    AddProgramDialog(PLauncherFrame parent) {
+        super(parent, LanguageManager.getTranslationsFromFile("NewProgram"), true);
+        dialog = this; frame = parent;
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
         contents = new JPanel(new GridBagLayout());
@@ -31,22 +33,13 @@ class AddProgramDialog extends JDialog {
         buttons = new JPanel(new FlowLayout());
         buttons.setBackground(Color.white);
 
-        submit = new SubmitButton(this, dataArray, secondColWidgets);
-        submit.setActionCommand("Submit");
-        submit.addActionListener(new AddProgramBL());
-
-        cancel = new CancelButton(this);
-        cancel.setActionCommand("Cancel");
-        cancel.addActionListener(new AddProgramBL());
-
-
-        buttons.add(cancel); buttons.add(submit);
+        buttons.add(new CancelButton()); buttons.add(new SubmitButton());
 
 
         firstColWidgets[0] = new JLabel(LanguageManager.getTranslationsFromFile("ProgramName", LanguageManager.getCurrentLang()) + " *");
         firstColWidgets[1] = new JLabel(LanguageManager.getTranslationsFromFile("ExecutablePath", LanguageManager.getCurrentLang()) + " *");
         firstColWidgets[2] = new JLabel(LanguageManager.getTranslationsFromFile("WorkingDir", LanguageManager.getCurrentLang()) + " *");
-        firstColWidgets[3] = new JLabel(LanguageManager.getTranslationsFromFile("IconPath", LanguageManager.getCurrentLang()));
+        firstColWidgets[3] = new JLabel(LanguageManager.getTranslationsFromFile("IconPath", LanguageManager.getCurrentLang()) + " *");
         firstColWidgets[4] = new JLabel(LanguageManager.getTranslationsFromFile("OptionalDescription", LanguageManager.getCurrentLang()));          
         
         for (int i = 0; i < 5; i++) {
@@ -63,7 +56,7 @@ class AddProgramDialog extends JDialog {
         secondColWidgets[0] = new DialogField(true);
         secondColWidgets[1] = new DialogField(true);
         secondColWidgets[2] = new DialogField(true);
-        secondColWidgets[3] = new DialogField(false);
+        secondColWidgets[3] = new DialogField(true);
         secondColWidgets[4] = new DialogField(false);
 
         for (int i = 0; i < 5; i++) {
@@ -82,9 +75,9 @@ class AddProgramDialog extends JDialog {
         BrowseButton browseWDPath = new BrowseButton(secondColWidgets, this);
         BrowseButton browseIconPath = new BrowseButton(secondColWidgets, this);
 
-        browseExePath.setActionCommand("BrowseEP"); browseExePath.addActionListener(new AddProgramBL());
-        browseWDPath.setActionCommand("BrowseWDP"); browseWDPath.addActionListener(new AddProgramBL());
-        browseIconPath.setActionCommand("BrowseIP"); browseIconPath.addActionListener(new AddProgramBL());        
+        browseExePath.setActionCommand("BrowseEP");
+        browseWDPath.setActionCommand("BrowseWDP");
+        browseIconPath.setActionCommand("BrowseIP");
 
         c.gridx = 2;
         c.gridy = 1;
@@ -107,17 +100,71 @@ class AddProgramDialog extends JDialog {
         this.setVisible(true);
     }
 
+    class CancelButton extends JButton implements ActionListener {
+        CancelButton() {
+            super(LanguageManager.getTranslationsFromFile("Cancel"));
+            setBackground(Color.white); addActionListener(this);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dialog.dispose();
+        }
+
+    }
+
+    class SubmitButton extends JButton implements ActionListener {
+
+        SubmitButton() {
+            super(LanguageManager.getTranslationsFromFile("Submit"));
+            addActionListener(this); setBackground(Color.white);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            for (int i = 0; i < 5; i++) {
+                String t = secondColWidgets[i].getText();
+                if (t.equals("") && secondColWidgets[i].isMandatory) {
+                    JOptionPane.showMessageDialog(dialog, LanguageManager.getTranslationsFromFile("FieldsAreMandatory"), LanguageManager.getTranslationsFromFile("Error"), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (!(new File(secondColWidgets[3].getText()).exists())) {
+                    int r = JOptionPane.showConfirmDialog(dialog, LanguageManager.getTranslationsFromFile("ImageDoesntExist"), LanguageManager.getTranslationsFromFile("Warning"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (r == JOptionPane.NO_OPTION) return;
+                }
+            }
+            try {
+                File outFile = new File(SysConst.getPrePath() + "programs" + File.separator + secondColWidgets[0].getText() + ".txt");
+                if(!outFile.createNewFile()) throw new IOException();
+                BufferedWriter bw = new BufferedWriter(new FileWriter(outFile.getAbsolutePath()));
+                bw.write(secondColWidgets[0].getText() + '\n');
+                bw.write(secondColWidgets[2].getText() + '\n');
+                bw.write(secondColWidgets[1].getText() + '\n');
+                bw.write(secondColWidgets[3].getText() + '\n');
+                bw.write(secondColWidgets[4].getText());
+                bw.close();
+                frame.loadPrograms();
+                dialog.dispose();
+            } catch (IOException exc) {
+                JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("ProgramAddingError") + '\n' + exc.getMessage(), LanguageManager.getTranslationsFromFile("Error"), JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+
+    }
+
 }
 
 class DialogField extends JTextField {
     boolean isMandatory;
     DialogField(boolean im) {
-        super(16);
+        super(24);
         isMandatory = im;
     }
 
     DialogField(String text, boolean im) {
-        super(16);
+        super(24);
         this.setText(text);
         isMandatory = im;
     }
@@ -125,29 +172,12 @@ class DialogField extends JTextField {
 
 class AddProgramBL implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("Cancel")) {
-            CancelButton a = (CancelButton) e.getSource();
-            a.buttondialog.dispose();
-        } else if (e.getActionCommand().equals("Submit")) {
-            SubmitButton a = (SubmitButton) e.getSource();
-            DialogField[] textFields = a.tf;
-            String[] da = a.datas;
-            for (int i = 0; i < 5; i++) {
-                String t = textFields[i].getText();
-                if (t.equals("") && textFields[i].isMandatory) {
-                    JOptionPane.showMessageDialog(a.buttondialog, "Fields with \"*\" are mandatory!", "Error", JOptionPane.ERROR_MESSAGE); 
-                    return;
-                }
-                da[i] = t;
-            }
-
-
-            a.buttondialog.dispose();
-
-        } else if (e.getActionCommand().equals("BrowseEP")) {
+        if (e.getActionCommand().equals("BrowseEP")) {
             BrowseButton a = (BrowseButton) e.getSource();
             DialogField[] textFields = a.tf;
             JFileChooser fc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+            fc.addChoosableFileFilter(new FileNameExtensionFilter("Executable files", "exe"));
+            fc.setAcceptAllFileFilterUsed(false);
             int r = fc.showOpenDialog(a.buttondialog);
             if (r == JFileChooser.APPROVE_OPTION) {
                 String path = fc.getSelectedFile().getAbsolutePath();
@@ -165,10 +195,12 @@ class AddProgramBL implements ActionListener {
                 String path = fc.getSelectedFile().getAbsolutePath();
                 textFields[2].setText(path);                               
             }
-        } else if (e.getActionCommand().equals("BrowseEP")) {
+        } else if (e.getActionCommand().equals("BrowseIP")) {
             BrowseButton a = (BrowseButton) e.getSource();
             DialogField[] textFields = a.tf;
             JFileChooser fc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+            fc.addChoosableFileFilter(new FileNameExtensionFilter("Images", "jpg", "jpeg", "gif", "png"));
+            fc.setAcceptAllFileFilterUsed(false);
             int r = fc.showOpenDialog(a.buttondialog);
             if (r == JFileChooser.APPROVE_OPTION) {
                 String path = fc.getSelectedFile().getAbsolutePath();
@@ -176,40 +208,20 @@ class AddProgramBL implements ActionListener {
             }
         }
     }
-}
-
-class CancelButton extends JButton {
-    JDialog buttondialog;
-    String[] datas;
-    CancelButton(JDialog bd) {
-        super(LanguageManager.getTranslationsFromFile("Cancel", LanguageManager.getCurrentLang()));
-        buttondialog = bd;
-    }
 
 }
 
-class SubmitButton extends JButton {
-    JDialog buttondialog;
-    String[] datas;
-    DialogField[] tf;
-
-    SubmitButton(JDialog bd, String[] dataArrayPassed, DialogField[] textFieldsPassed) {
-        super(LanguageManager.getTranslationsFromFile("Submit", LanguageManager.getCurrentLang()));
-        buttondialog = bd;
-        datas = dataArrayPassed;
-        tf = textFieldsPassed;
-    }
 
 
-}
+
 
 class BrowseButton extends JButton {
     DialogField[] tf;
     JDialog buttondialog;
     BrowseButton(DialogField[] textFieldsPassed, JDialog bd) {
-        super("Browse...", new ImageIcon(SysConst.getPrePath() + "images\\" + "browse.png", "Browse..."));
+        super(LanguageManager.getTranslationsFromFile("Browse"), new ImageIcon(SysConst.getPrePath() + "images\\" + "browse.png", LanguageManager.getTranslationsFromFile("Browse")));
         tf = textFieldsPassed;
         buttondialog = bd;
-        this.setHorizontalTextPosition(SwingConstants.LEFT);
+        this.setHorizontalTextPosition(SwingConstants.LEFT); addActionListener(new AddProgramBL());
     }
 }

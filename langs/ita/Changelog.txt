@@ -1,3 +1,4 @@
-Modifiche nella versione 1.0.1:
+Modifiche nella versione 1.2:
 
- - Risoluzione bug grafici
+ - Interfaccia ridisegnata
+ - Correzione di bug

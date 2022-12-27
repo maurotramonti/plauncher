@@ -1,5 +1,3 @@
-package plauncher;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -14,11 +12,11 @@ class AboutMenuHandler extends PLauncher implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         lang = frame.getLang();
         if (e.getActionCommand().equals("About PLauncher")) {
-            JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("VersionString", lang), "Version info", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(SysConst.getLogoPath()));
+            JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getTranslationsFromFile("VersionString", lang), "Info", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(SysConst.getLogoPath()));
         }
 
         else if (e.getActionCommand().equals("About Java")) {
-            JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getJavaVersionString(lang), "About Java", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(SysConst.getJavaLogoPath()));
+            JOptionPane.showMessageDialog(frame.getFrame(), LanguageManager.getJavaVersionString(lang), "Info", JOptionPane.INFORMATION_MESSAGE, new ImageIcon(SysConst.getJavaLogoPath()));
         }
         else if (e.getActionCommand().equals("Changelog")) {
             frame.loadChangelog();

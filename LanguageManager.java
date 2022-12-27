@@ -1,5 +1,3 @@
-package plauncher;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -18,8 +16,8 @@ class LanguageManager extends PLauncher implements ActionListener {
             lang = 0;
         }
         String clg;
-        if(lang == 0) clg = new String("English");
-        else if(lang == 1) clg = new String("Italiano");
+        if (lang == 0) clg = "English";
+        else if (lang == 1) clg = "Italiano";
         else clg = new String("none");
         try {
             String s;
@@ -77,7 +75,7 @@ class LanguageManager extends PLauncher implements ActionListener {
     public static String getTranslationsFromFile(String property, int lang) {
         String prefix, contents = "";
         switch (lang) {
-            case 0: 
+            case 0:
                 prefix = SysConst.getPrePath() + File.separator + "langs" + File.separator + "eng" + File.separator;
                 break;
             case 1:
@@ -96,6 +94,10 @@ class LanguageManager extends PLauncher implements ActionListener {
             s.close();
         } catch (FileNotFoundException e) {}
         return contents;
+    }
+
+    public static String getTranslationsFromFile(String property) {
+        return LanguageManager.getTranslationsFromFile(property, LanguageManager.getCurrentLang());
     }
     public static String getJavaVersionString(int lang) {
         if (lang == 0) return "Version: " + System.getProperty("java.vm.version") + "\nInstall path:  " + System.getProperty("java.home") + "\nOperating system: " + System.getProperty("os.name");

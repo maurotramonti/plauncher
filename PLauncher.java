@@ -1,5 +1,3 @@
-package plauncher;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -7,10 +5,10 @@ import javax.swing.event.*;
 import java.io.*;
 import java.util.Scanner;
 import java.net.*;
+import org.apache.commons.io.FileUtils;
 
 
 class SysConst {
-    static final String system = System.getProperty("os.name");
     public static String getPrePath() {
         return System.getenv("LOCALAPPDATA") +  "\\plauncher\\";
     }
@@ -23,19 +21,23 @@ class SysConst {
 }
 
 class PLauncherFrame extends JFrame {
-    private JFrame frame;
+    private final JFrame frame;
     private int lang = 1;
-    public JTabbedPane tPane = new JTabbedPane();
-    public ProgramTab[] pTabs;
-    private JMenu fileMenu, prefMenu, aboutMenu;
-    private JMenuBar menuBar = new JMenuBar();
+
+    protected JMenuItem modifyButton, deleteButton;
+
+    protected JList<ImageIcon> programsList = new JList<>();
+
+    private final JSplitPane splitPane = new JSplitPane();
+
+    protected ProgramInformationPanel[] rightPane;
 
 
     PLauncherFrame() {
         super("P-Launcher");
         frame = this;
-        frame.setSize(800, 600);
-        frame.setResizable(false);
+        frame.setMinimumSize(new Dimension(735, 390));
+        frame.setPreferredSize(new Dimension(735, 390));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setIconImage(Toolkit.getDefaultToolkit().getImage(SysConst.getLogoPath()));
 
@@ -50,7 +52,7 @@ class PLauncherFrame extends JFrame {
                 bw.write("0");
                 bw.close();
             } 
-        } catch (IOException e) {}
+        } catch (IOException ignored) {}
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(SysConst.getPrePath() + "conf" + File.separator + "lastcheck.txt"));
@@ -60,14 +62,14 @@ class PLauncherFrame extends JFrame {
             if ((System.currentTimeMillis() - millis) >= 172800000) { // sono passati almeno 2 giorni
                 checkUpdates(true);
             }
-        } catch (IOException ex) {}
+        } catch (IOException ignored) {}
 
 
         loadPrograms();
-        
-        fileMenu = new JMenu("File");
-        prefMenu = new JMenu(LanguageManager.getTranslationsFromFile("Preferences", lang));
-        aboutMenu = new JMenu(LanguageManager.getTranslationsFromFile("Help", lang));
+
+        JMenu fileMenu = new JMenu("File");
+        JMenu prefMenu = new JMenu(LanguageManager.getTranslationsFromFile("Preferences", lang));
+        JMenu aboutMenu = new JMenu(LanguageManager.getTranslationsFromFile("Help", lang));
 
         JMenuItem createNewButton = new JMenuItem(LanguageManager.getTranslationsFromFile("NewProgram", lang));
         createNewButton.addActionListener(new FileMenuHandler());
@@ -76,14 +78,14 @@ class PLauncherFrame extends JFrame {
 
         fileMenu.add(createNewButton);
 
-        JMenuItem modifyButton = new JMenuItem(LanguageManager.getTranslationsFromFile("ModifyCurrent", lang));
+        modifyButton = new JMenuItem(LanguageManager.getTranslationsFromFile("ModifyCurrent", lang));
         modifyButton.addActionListener(new FileMenuHandler());
         modifyButton.setActionCommand("Modify");
         modifyButton.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_DOWN_MASK));
 
         fileMenu.add(modifyButton);
 
-        JMenuItem deleteButton = new JMenuItem(LanguageManager.getTranslationsFromFile("DeleteProgram", lang));
+        deleteButton = new JMenuItem(LanguageManager.getTranslationsFromFile("DeleteProgram", lang));
         deleteButton.addActionListener(new FileMenuHandler());
         deleteButton.setActionCommand("Delete");
         deleteButton.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK));
@@ -100,6 +102,7 @@ class PLauncherFrame extends JFrame {
 
         fileMenu.add(exitButton);
 
+        JMenuBar menuBar = new JMenuBar();
         menuBar.add(fileMenu);
 
         JMenuItem langButton = new JMenuItem(LanguageManager.getTranslationsFromFile("Language", lang));
@@ -138,7 +141,17 @@ class PLauncherFrame extends JFrame {
 
         frame.setJMenuBar(menuBar);
 
-        frame.add(tPane);
+        // Window Design
+
+
+        programsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        programsList.setSelectedIndex(0); programsList.addListSelectionListener(new ProgramsListListener());
+
+        splitPane.setBackground(Color.white); splitPane.setLeftComponent(new JScrollPane(programsList)); splitPane.setRightComponent(rightPane[programsList.getSelectedIndex()]);
+        splitPane.getLeftComponent().setMinimumSize(new Dimension(64, 0));  // to avoid the "disappearance" of the JList because of stupid users
+        ((JScrollPane) splitPane.getLeftComponent()).setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        frame.add(splitPane);
         frame.setVisible(true);
     }
 
@@ -150,12 +163,77 @@ class PLauncherFrame extends JFrame {
         return lang;
     }
 
-    public JTabbedPane getTabbedPane() {
-        return tPane;
+
+    class ProgramInformationPanel extends JPanel {
+
+        private String titleString, exePathString, workingDirString;
+
+        ProgramInformationPanel(String name, String executablePath, String workingDirPath, String description, String imagePath) {
+            super(new GridBagLayout()); setBackground(Color.white);
+            GridBagConstraints gbc = new GridBagConstraints();
+
+            exePathString = executablePath; workingDirString = workingDirPath; titleString = name;
+
+            JLabel title = new JLabel("<html><h2>" + name + "</h2></html>", new ImageIcon(new ImageIcon(imagePath).getImage().getScaledInstance(38, 38, Image.SCALE_DEFAULT)), SwingConstants.LEFT);
+            JLabel exePath = new JLabel("<html><b>" + LanguageManager.getTranslationsFromFile("ExecutablePath", lang) + ": </b>" + executablePath);
+            JLabel workingDir = new JLabel("<html><b>" + LanguageManager.getTranslationsFromFile("WorkingDir", lang) + ": </b>" + workingDirPath);
+            JTextPane description1 = new JTextPane();
+            description1.setText(description); description1.setEditable(false);
+
+            gbc.gridx = 0; gbc.gridy = 0; gbc.insets = new Insets(10, 10, 10, 10);
+            add(title, gbc); gbc.gridy++; gbc.anchor = GridBagConstraints.LINE_START; add(exePath, gbc); gbc.gridy++; add(workingDir, gbc);
+            gbc.gridy++; add(description1, gbc); gbc.fill = GridBagConstraints.HORIZONTAL; gbc.gridy++;
+            add(new LaunchButton(), gbc);
+
+        }
+
+        ProgramInformationPanel() {
+            super(new FlowLayout()); setBackground(Color.white); add(new JLabel(LanguageManager.getTranslationsFromFile("NoProgramAdded")));
+        }
+
+        public String getTitle() {
+            return titleString;
+        }
+
+        public String getExePath() {
+            return exePathString;
+        }
+
+        public String getWorkingDir() {
+            return workingDirString;
+        }
     }
 
-    public ProgramTab[] getProgramTabs() {
-        return pTabs;
+    class LaunchButton extends JButton implements ActionListener {
+        LaunchButton() {
+            super(LanguageManager.getTranslationsFromFile("Launch", lang));
+            addActionListener(this); setBackground(Color.white);
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                ProcessBuilder pb = new ProcessBuilder(rightPane[programsList.getSelectedIndex()].getExePath());
+                pb.directory(new File(rightPane[programsList.getSelectedIndex()].getWorkingDir()));
+                pb.start();
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("LaunchError", lang), LanguageManager.getTranslationsFromFile("Error", lang), JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    class ProgramsListListener implements ListSelectionListener {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            if (programsList.isSelectionEmpty()) {
+                modifyButton.setEnabled(false);
+                deleteButton.setEnabled(false);
+            }
+            else {
+                modifyButton.setEnabled(true);
+                deleteButton.setEnabled(true);
+                splitPane.setRightComponent(rightPane[programsList.getSelectedIndex()]);
+            }
+        }
     }
 
     protected void loadLanguage() {
@@ -163,8 +241,8 @@ class PLauncherFrame extends JFrame {
         try {
             File file = new File(SysConst.getPrePath() + "conf" + File.separator + "language.txt");
             Scanner scanner = new Scanner(file);
-            String l = new String();
-            if (scanner.hasNextLine() == false) {
+            String l;
+            if (!scanner.hasNextLine()) {
                 lm.actionPerformed(null);
                 loadLanguage();
             }
@@ -177,7 +255,7 @@ class PLauncherFrame extends JFrame {
                 loadLanguage();
             }
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("SettingFileError", lang));
+            JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("SettingFileError", lang) + '\n' + e.getMessage());
             lm.actionPerformed(null);
             loadLanguage();
         }
@@ -188,53 +266,39 @@ class PLauncherFrame extends JFrame {
     }
 
     protected void checkUpdates(boolean showOnlyIfPositive) {
-        final int internalVersion = 110;
-        final String internalVersionString = new String("110");
+        final int internalVersion = 120;
         try {
             URL url = new URL("https://raw.githubusercontent.com/maurotramonti/plauncher/main/conf/latest.txt");
-            InputStream is = url.openStream();
-            // Stream to the destionation file
-            FileOutputStream fos = new FileOutputStream(SysConst.getPrePath() + "conf" + File.separator + "latest.txt");
-            // Read bytes from URL to the local file
-            byte[] buffer = new byte[4096];
-            int bytesRead = 0;
-            while ((bytesRead = is.read(buffer)) != -1) {
-      	        fos.write(buffer, 0, bytesRead);
-            }
-
-            // Close destination stream
-            fos.close();
-            // Close URL stream
-            is.close();
             File file = new File(SysConst.getPrePath() + "conf" + File.separator + "latest.txt");
+            FileUtils.copyURLToFile(url, file, 10000, 10000);
+
+
             Scanner scanner = new Scanner(file);
-            String l = new String();
-            l = scanner.nextLine();
+            String l = scanner.nextLine();
             final int internalVersionRead = Integer.parseInt(l);
             if (internalVersionRead > internalVersion) {
                 JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("CUTxtY", lang), LanguageManager.getTranslationsFromFile("CUTtl", lang), JOptionPane.INFORMATION_MESSAGE);
             } else {
                 if (!showOnlyIfPositive) JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("CUTxtN", lang), LanguageManager.getTranslationsFromFile("CUTtl", lang), JOptionPane.INFORMATION_MESSAGE);
             }
-            scanner.close();            
-            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-            bw.write(internalVersionString);
-            bw.close();
-            bw = new BufferedWriter(new FileWriter(SysConst.getPrePath() + "conf" + File.separator + "lastcheck.txt"));
+            scanner.close();
+            BufferedWriter bw = new BufferedWriter(new FileWriter(SysConst.getPrePath() + "conf" + File.separator + "lastcheck.txt"));
             bw.write(Long.toString(System.currentTimeMillis()));
             bw.close();
         } catch (Exception exception) {
-            JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("CheckUpdatesErr", lang), LanguageManager.getTranslationsFromFile("Warning", lang), JOptionPane.ERROR_MESSAGE);
-            return;
+            JOptionPane.showMessageDialog(frame, LanguageManager.getTranslationsFromFile("CheckUpdatesErr", lang) + "\nMessage:\n" + exception.getMessage(), LanguageManager.getTranslationsFromFile("Warning", lang), JOptionPane.ERROR_MESSAGE);
         }
     }
 
     protected void loadPrograms() {
         File pDir = new File(SysConst.getPrePath() + "programs");
         String[] pList = pDir.list();
+        DefaultListModel<ImageIcon> lm = new DefaultListModel<>();
+        int oldSelectedIndex;
+        if (programsList.isSelectionEmpty()) oldSelectedIndex = 0;
+        else oldSelectedIndex = programsList.getSelectedIndex();
         if (pList != null) {
-        
-            pTabs = new ProgramTab[pList.length];
+            rightPane = new ProgramInformationPanel[pList.length];
             int i, j = 0;
             try {
                 for (String pPath : pList) {
@@ -245,14 +309,20 @@ class PLauncherFrame extends JFrame {
                     while (scanner.hasNextLine()) {
                         pAttrs[i] = scanner.nextLine();
                         i++;
-                    } 
-                    pTabs[j] = new ProgramTab(pAttrs[0], pAttrs[1], pAttrs[2], pAttrs[3], pAttrs[4], lang);
-                    tPane.addTab(pTabs[j].getProgramName(), new ImageIcon(new ImageIcon(pAttrs[3]).getImage().getScaledInstance(24, 24,  Image.SCALE_DEFAULT)), pTabs[j]);
+                    }
+                    rightPane[j] = new ProgramInformationPanel(pAttrs[0], pAttrs[2], pAttrs[1], pAttrs[4], pAttrs[3]);
+                    lm.addElement(new ImageIcon(new ImageIcon(pAttrs[3]).getImage().getScaledInstance(56, 56, Image.SCALE_DEFAULT)));
                     j++;
-                    scanner.close();  // libera l'accesso al file
+                    scanner.close();
                 }
-            } catch (FileNotFoundException e) {}
-        } else pTabs = new ProgramTab[16];
+            } catch (FileNotFoundException ignored) {}
+        } else
+            {
+                rightPane = new ProgramInformationPanel[1];
+                rightPane[0] = new ProgramInformationPanel();
+            }
+        programsList.setModel(lm);
+        programsList.setSelectedIndex(oldSelectedIndex);
     }
 
 }
@@ -261,6 +331,9 @@ class PLauncherFrame extends JFrame {
 public class PLauncher {
     static PLauncherFrame frame;
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
         frame = new PLauncherFrame();
     }
 }

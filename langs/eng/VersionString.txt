@@ -1,2 +1,2 @@
-P-Launcher 1.0.1 (build 150422)
+P-Launcher 1.2 (build 271222)
 Author: Mauro Tramonti

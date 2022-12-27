@@ -1,26 +1,32 @@
-package plauncher;
+import org.apache.commons.io.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
 import javax.swing.event.*;
 import javax.swing.border.*;
 import javax.swing.filechooser.*;
 
 
 class EditProgramDialog extends JDialog {
+    private PLauncherFrame frame;
     private JDialog dialog;
+
+    private File confFile;
     JPanel contents, buttons;
-    SubmitButton submit;
-    CancelButton cancel;
     GridBagConstraints c = new GridBagConstraints();
 
     JComponent[] firstColWidgets = new JComponent[5];
     DialogField[] secondColWidgets = new DialogField[5];
 
-    EditProgramDialog(JFrame parent, String[] dataArray) {
+    EditProgramDialog(PLauncherFrame parent, File conffile) {
         super(parent, LanguageManager.getTranslationsFromFile("EditProgram", LanguageManager.getCurrentLang()), true);
-        dialog = this;
+        dialog = this; frame = parent; confFile = conffile;
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         
         contents = new JPanel(new GridBagLayout());
@@ -31,22 +37,13 @@ class EditProgramDialog extends JDialog {
         buttons = new JPanel(new FlowLayout());
         buttons.setBackground(Color.white);
 
-        submit = new SubmitButton(this, dataArray, secondColWidgets);
-        submit.setActionCommand("Submit");
-        submit.addActionListener(new EditProgramBL());
-
-        cancel = new CancelButton(this);
-        cancel.setActionCommand("Cancel");
-        cancel.addActionListener(new EditProgramBL());
-
-
-        buttons.add(cancel); buttons.add(submit);
+        buttons.add(new CancelButton()); buttons.add(new SubmitButton());
 
 
         firstColWidgets[0] = new JLabel(LanguageManager.getTranslationsFromFile("ProgramName", LanguageManager.getCurrentLang()) + " *");
         firstColWidgets[1] = new JLabel(LanguageManager.getTranslationsFromFile("ExecutablePath", LanguageManager.getCurrentLang()) + " *");
         firstColWidgets[2] = new JLabel(LanguageManager.getTranslationsFromFile("WorkingDir", LanguageManager.getCurrentLang()) + " *");
-        firstColWidgets[3] = new JLabel(LanguageManager.getTranslationsFromFile("IconPath", LanguageManager.getCurrentLang()));
+        firstColWidgets[3] = new JLabel(LanguageManager.getTranslationsFromFile("IconPath", LanguageManager.getCurrentLang()) + " *");
         firstColWidgets[4] = new JLabel(LanguageManager.getTranslationsFromFile("OptionalDescription", LanguageManager.getCurrentLang()));          
         
         for (int i = 0; i < 5; i++) {
@@ -59,6 +56,22 @@ class EditProgramDialog extends JDialog {
             c.fill = GridBagConstraints.HORIZONTAL;
             contents.add(firstColWidgets[i], c);
         }
+
+        String[] dataArray = new String[5];
+        Scanner s = null;
+        try {
+            s = new Scanner(conffile);
+            for (int i = 0; i < 5; i++) {
+                dataArray[i] = s.nextLine();
+            }
+            s.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(dialog, LanguageManager.getTranslationsFromFile("CantReadConffile") + '\n' + ex.getMessage(), LanguageManager.getTranslationsFromFile("Error"), JOptionPane.ERROR_MESSAGE);
+            s.close();
+            
+        }
+
 
         secondColWidgets[0] = new DialogField(dataArray[0], true);
         secondColWidgets[1] = new DialogField(dataArray[1], true);
@@ -107,31 +120,60 @@ class EditProgramDialog extends JDialog {
         this.setVisible(true);
     }
 
+    class CancelButton extends JButton implements ActionListener {
+        CancelButton() {
+            super(LanguageManager.getTranslationsFromFile("Cancel"));
+            setBackground(Color.white); addActionListener(this);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dialog.dispose();
+        }
+    }
+
+    class SubmitButton extends JButton implements ActionListener {
+        SubmitButton() {
+            super(LanguageManager.getTranslationsFromFile("Submit"));
+            setBackground(Color.white); addActionListener(this);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            for (int i = 0; i < 5; i++) {
+                if (secondColWidgets[i].getText().equals("") && secondColWidgets[i].isMandatory) {
+                    JOptionPane.showMessageDialog(dialog, LanguageManager.getTranslationsFromFile("FieldsAreMandatory"), LanguageManager.getTranslationsFromFile("Error"), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            if (!(new File(secondColWidgets[3].getText()).exists())) {
+                int r = JOptionPane.showConfirmDialog(dialog, LanguageManager.getTranslationsFromFile("ImageDoesntExist"), LanguageManager.getTranslationsFromFile("Warning"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (r == JOptionPane.NO_OPTION) return;
+            }
+
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(confFile));
+                for (int i = 0; i < 5; i++) {
+                    bw.write(secondColWidgets[i].getText() + '\n');
+                }
+                bw.close();
+                FileUtils.moveFile(confFile, new File(SysConst.getPrePath() + "programs\\" + secondColWidgets[0].getText() + ".txt"));
+                frame.loadPrograms();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(dialog, LanguageManager.getTranslationsFromFile("EditProgramError") + '\n' + ex.getMessage(), LanguageManager.getTranslationsFromFile("Error"), JOptionPane.ERROR_MESSAGE);
+            } finally {
+                dialog.dispose();
+            }
+        }
+    }
+
 }
 
 class EditProgramBL implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("Cancel")) {
-            CancelButton a = (CancelButton) e.getSource();
-
-            a.buttondialog.dispose();
-        } else if (e.getActionCommand().equals("Submit")) {
-            SubmitButton a = (SubmitButton) e.getSource();
-            DialogField[] textFields = a.tf;
-            String[] da = a.datas;
-            for (int i = 0; i < 5; i++) {
-                String t = textFields[i].getText();
-                if (t.equals("") && textFields[i].isMandatory) {
-                    JOptionPane.showMessageDialog(a.buttondialog, "Fields with \"*\" are mandatory!", "Error", JOptionPane.ERROR_MESSAGE); 
-                    return;
-                }
-                da[i] = t;
-            }
-
-            da[5] = "true";
-            a.buttondialog.dispose();
-
-        } else if (e.getActionCommand().equals("BrowseEP")) {
+        if (e.getActionCommand().equals("BrowseEP")) {
             BrowseButton a = (BrowseButton) e.getSource();
             DialogField[] textFields = a.tf;
             JFileChooser fc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
@@ -152,10 +194,12 @@ class EditProgramBL implements ActionListener {
                 String path = fc.getSelectedFile().getAbsolutePath();
                 textFields[2].setText(path);                               
             }
-        } else if (e.getActionCommand().equals("BrowseEP")) {
+        } else if (e.getActionCommand().equals("BrowseIP")) {
             BrowseButton a = (BrowseButton) e.getSource();
             DialogField[] textFields = a.tf;
             JFileChooser fc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+            fc.addChoosableFileFilter(new FileNameExtensionFilter("Images", "jpg", "jpeg", "gif", "png"));
+            fc.setAcceptAllFileFilterUsed(false);
             int r = fc.showOpenDialog(a.buttondialog);
             if (r == JFileChooser.APPROVE_OPTION) {
                 String path = fc.getSelectedFile().getAbsolutePath();

@@ -1,0 +1,2 @@
+L'immagine selezionata non esiste: il programma potrebbe non risultare visibile nella lista.
+Continuare?
